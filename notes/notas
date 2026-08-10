@@ -1,0 +1,145 @@
+primer cubo 7 16
+EMPIEZA LO BUENO
+tocara el rellenado, iluminacion, probar rotacion, y completar el pepiline grafico
+
+
+//evaluar si esta adaptado a ndc -si
+//para  el 17 (mna) adaptar esto de aqui
+fn draw_full_triangle(buff:&mut Framebuffer,a: &Vec2, b: &Vec2, c: &Vec2, letter: char){
+
+
+    let area = signed_area(a, b, c); //edge == signed area, siempre usar el asegurar ccw
+    //if area.abs() < 0.5 { return Ok(()); }
+
+
+    let min_x = a.x.min(b.x).min(c.x).floor() as i32;
+    let max_x = a.x.max(b.x).max(c.x).ceil() as i32;
+    let min_y = a.y.min(b.y).min(c.y).floor() as i32;
+    let max_y = a.y.max(b.y).max(c.y).ceil() as i32;
+
+
+
+
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+
+        if x < 0 || y < 0 { continue; }
+
+
+        let p = Vec2::new(x as f32 + 0.5, y as f32 + 0.5);
+
+
+
+
+
+            //  Test de pertenencia
+            if inside_triangle(&a, &b, &c, &p) {
+                draw_point();
+            }
+        }
+    }
+
+
+}
+
+<
+fn inside_triangle(a:&Vec2, b:&Vec2, c:&Vec2, p:&Vec2) -> bool{
+    signed_area()<0.0 &&
+    signed_area()<0.0 &&
+    signed_area()<0.0
+
+}
+
+mover todo fuera de render, solo servira para mostrar el objeto
+
+crear funciones de traslacion
+
+rotacion en eje propio
+
+rotacion en pivote/orbital //mas despues, no entiendo mucho el calculo. No quiero atrasarme.
+
+z buffer
+
+despues de eso adaptar la rasterizacion de triangulos
+
+z buffer explain
+
+para cada píxel a dibujar con profundidad z_nuevo:
+    si z_nuevo < zbuffer[x][y]:   # más cerca que lo que ya había
+        zbuffer[x][y] = z_nuevo
+        framebuffer[x][y] = color_nuevo
+
+
+mano aqui esta todo carajo
+https://hektorprofe.github.io/graficos-3d/12-rasterizacion-de-triangulos/
+
+
+
+minifb / pixels / softbuffer future 3d grapichs
+
+
+
+
+
+PENDIENTE
+
+AREGLAR EL YAW Y PICHT DE LA CAMARA E INTEGRAR CON EL MOUSE O VER COMO HACERLO
+
+AREGLAR EL CLIPING OBTENIENDO EL P RELATIVO ROTADO CON LA CAMARA
+
+RESOLVER LA BENDITA VELOCIDAD DE LA CAMARA Y PORQUE TIEMBLA TANTO
+
+
+todo arreglado, solo me falta implementar el right y todo listo para ir con el z zbuffer
+antes del z buffer va el obj loader para debuguear z buffer mejor.
+
+
+
+
+
+para obtener la z de un pixel hay que interpolar el inverso
+debido a x/z*d, ya no se puede hacer directamente con esta ya que por d las coords x y pueden
+variar mucho, asi que no podemos hacer la operacion inversa
+
+inz_z
+=
+
+e0 * (1/z0) +
+e1 * (1/z1) +
+e2 * (1/z2)
+
+z = 1 / inv_z
+
+
+
+hacer el obj loader
+implementar iluminacion unica solo por rgb
+
+PENDIENTE
+
+organizar el codigo para seguir, esto es urgente
+
+debugger
+
+FRUSTUM
+
+LUZ LAMBERT
+
+texturas
+
+usar mas enum y traits
+
+hacer un juego con el motor
+
+
+
+
+
+
+
+
+
+
+
+
+

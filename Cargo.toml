@@ -1,0 +1,10 @@
+[package]
+name = "tridi2dot0"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bresenham = "0.1.1"
+crossterm = "0.29.0"
+glam = "0.33.2"
+tobj = "4.0.4"

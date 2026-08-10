@@ -1,0 +1,10 @@
+
+crossterm solo se usara para 
+    enable raw mode
+    disable raw mode
+    terminal cols rows
+    y yas
+
+    glam se usara para las mates
+
+    tobj para leer .obj

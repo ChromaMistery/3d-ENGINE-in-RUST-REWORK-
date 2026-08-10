@@ -1,0 +1,63 @@
+Apunta tu dedo índice hacia arriba (Eje Y) y tu dedo pulgar hacia la derecha (Eje X).
+
+Ahora, extiende tu dedo medio hacia adelante:Mano Derecha
+
+
+
+(RH): El dedo medio apunta hacia tu cara. El eje Z positivo viene hacia ti.
+Los objetos con un valor Z mayor están más cerca de la pantalla.
+
+
+
+Mano Izquierda (LH): El dedo medio apunta hacia la pantalla. El eje Z positivo se aleja de ti.
+
+IMPORTANTE
+Los objetos con un valor Z mayor están más lejos (se hunden en la pantalla).
+
+eligo rh, tiene mas sentido que el punto de vista sea el punto 0,0,0
+
+es el estandar comun
+
+sentido antihorario
+
+       [ Vértice 3 ]
+            /\
+           /  \
+          /    \
+         /  <-  \  (Sentido Antihorario / CCW)
+        /________\
+[ Vértice 1 ]  [ Vértice 2 ]
+
+el vertice 2 seria el primero que se dibujaria luego el v1 y despues el 3
+
+
+el pi se puede obtner con std, lo usare para los angulos
+let pi_f32 = std::f32::consts::PI;
+
+MEGA IMPORTANTE
+se acumulara los erroes de punto flotante para rendondear al final con .round() y
+luego convertir a i32 (entero de texto)
+
+
+
+
+
+formula de proyeccion en un espacio de coords normalizado
+            desde la camara con el punto 000
+
+                d*x\z
+                d*y\z
+
+                d representa distancia fija del ojo
+                  fov
+                  zoom
+                  distancia focal
+                  campo visual
+
+
+
+
+                  para cada píxel a dibujar con profundidad z_nuevo:
+    si z_nuevo < zbuffer[x][y]:   # más cerca que lo que ya había
+        zbuffer[x][y] = z_nuevo
+        framebuffer[x][y] = color_nuevo
