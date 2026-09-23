@@ -96,7 +96,7 @@ pub fn difusse_light(
 
     final_c = (r, g, b);
 
-    final_c
+    return final_c;
     //}
 
     //final_c

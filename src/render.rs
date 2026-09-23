@@ -2,17 +2,28 @@ use bresenham::Bresenham;
 use crossterm::{cursor, queue, style::Print};
 
 use std::{
-    f32,
+    clone, f32,
     fmt::{Write, format},
+    io::{self},
     os::raw::c_short,
-    result, thread,
+    result, thread, time,
 };
 
 use std::cmp::{max, min};
 
-use crate::obj::{self, Obj3d};
+use crate::{
+    cam::{self, CAM},
+    engine_setup::EngineConf,
+    lights::{calculate_all_scene_lights, difusse_light},
+    obj::Triangle,
+};
+use crate::{
+    lights::Light,
+    obj::{self, Obj3d},
+};
 use glam::{camera, prelude::*};
 use std::time::{Duration, Instant};
+
 /*
 1. Posición del cursor   →  \x1B[{fila};{columna}H
 2. Color (fg y/o bg)     →  \x1b[38;2;R;G;Bm   (foreground)
@@ -23,7 +34,7 @@ use std::time::{Duration, Instant};
 
 voy poner en todas las funciones \x1b[0m para evitar bugs, ya cuando el pepiline grafico funcione correctamente lo quito para mas rendimiento
 */
-
+#[derive(Clone)]
 pub struct FrameBuffer {
     pub widht: usize,
     pub height: usize,
@@ -51,37 +62,25 @@ impl FrameBuffer {
     }
 
     pub fn update_size(&mut self, w: usize, h: usize) {
-        self.widht = w;
-        self.height = h;
-        self.frame = String::with_capacity(w * h * 25);
-        self.z_buffer = vec![vec![f32::INFINITY; w]; h];
-    }
-
-    pub fn print_buffer(&self) {
-        println!("{}", self.frame);
-    }
-
-    pub fn basic_clear(&mut self) {
-        self.frame.clear();
-        self.frame.push_str("\x1B[2J\x1B[H");
-
-        for row in &mut self.z_buffer {
-            row.fill(f32::INFINITY);
+        if self.widht != w || self.height != h {
+            self.widht = w;
+            self.height = h;
+            self.frame = String::with_capacity(w * h * 25);
+            self.z_buffer = vec![vec![f32::INFINITY; w]; h];
         }
     }
 
-    pub fn background_clear(&mut self, color: (u8, u8, u8)) {
+    pub fn print_frame(&self) {
+        println!("{}", self.frame);
+    }
+
+    pub fn clear(&mut self) {
         self.frame.clear();
         self.frame.push_str("\x1B[2J\x1B[H");
-        for i in 0..self.height {
-            for j in 0..self.widht {
-                write!(
-                    self.frame,
-                    "\x1B[{};{}H\x1b[48;2;{};{};{}m ",
-                    i, j, color.0, color.1, color.2
-                )
-                .unwrap();
-            }
+        self.frame.push_str("\x1b[H");
+
+        for row in &mut self.z_buffer {
+            row.fill(f32::INFINITY);
         }
     }
 
@@ -93,12 +92,9 @@ impl FrameBuffer {
             (1.0 - (v.y + 1.0) / 2.0) * self.height as f32,
         )
     }
-
-    //debug, si quito optimizacion mas correcion
-    //self.frame.push_str("\x1b[0m"); //reinciar toda la terminal y los ansi codes
 }
 
-pub mod Cursor {
+pub mod cursor_options {
     pub fn ocultar_cursor() {
         println!("\x1b[?25l:");
     }
@@ -108,15 +104,13 @@ pub mod Cursor {
     }
 }
 
-//dentro del triangulo == edge fn
+///dentro del triangulo == edge fn
 fn signed_area(v1: Vec2, v2: Vec2, v3: Vec2) -> f32 {
     (v2.x - v1.x) * (v3.y - v1.y) - (v3.x - v1.x) * (v2.y - v1.y)
 }
 
 /// devuelve los vertices reordenados para garantizar orden antihorario CCW
 /// asume sistema de coordenadas co hacia arriba
-
-//usar para leer con tobj
 fn ensure_ccw(v1: Vec2, v2: Vec2, v3: Vec2) -> (Vec2, Vec2, Vec2) {
     if signed_area(v1, v2, v3) < 0.0 {
         //cw horario -> resultado negativo si esta correcto
@@ -161,7 +155,7 @@ pub fn draw_ascii_line(
 pub fn draw_point(buff: &mut FrameBuffer, v: Vec2, letter: char, color: (u8, u8, u8)) {
     //let aspect_ratio = 0.5;
 
-    let mut v0 = buff.screen(v.clone());
+    let v0 = buff.screen(v.clone());
     //v0.x = v.x * aspect_ratio;
 
     write!(
@@ -232,7 +226,7 @@ roll -> rotacion sobre el eje z
 */
 
 //proyeccion 3d
-pub fn proyect_3d(v: &Vec3, cam: &mut obj::CAM) -> Vec2 {
+pub fn proyect_3d(v: &Vec3, cam: &mut cam::CAM) -> Vec2 {
     //d*x\z
     //d*y\z
 
@@ -253,80 +247,64 @@ pub fn proyect_3d(v: &Vec3, cam: &mut obj::CAM) -> Vec2 {
     Vec2::new(x, y)
 }
 
-pub fn render(
-    buff: &mut FrameBuffer,
-    escene: &mut Vec<&mut obj::Obj3d>,
-    z_near: f32,
-    z_far: f32,
-    ambiente: &f32,
-    luz_pos: Vec3,
-    cam: &mut obj::CAM,
-) {
-    //sort de mayor a menor de z
-    //escene.sort_by(|a, b| b.pos.z.total_cmp(&a.pos.z));
-
-    for obj in escene {
+//cada funcion de aqui debe de ser adaptada para recibir el engine
+pub fn render(context: &mut EngineConf, l: Light) {
+    //difusse light
+    //revertir esta monda, eliminar esa funcion de procesar tris, y meter todas las tranformaciones directamente aqui
+    //if obj.type == light obj.light . append in lights of scene
+    for obj in &mut context.escene.objs {
         for triangle in &obj.mesh {
-            let p1 = triangle.p1 + obj.pos;
-            let p2 = triangle.p2 + obj.pos;
-            let p3 = triangle.p3 + obj.pos;
+            let traslacion = Mat4::from_translation(obj.pos);
 
-            let r1 = obtener_p_relativo(p1, cam);
-            let r2 = obtener_p_relativo(p2, cam);
-            let r3 = obtener_p_relativo(p3, cam);
+            let tri = Obj3d::scale(&obj, obj.scale, &triangle);
 
-            /*
-            if r1.x > buff.widht as f32 && r2.x > buff.widht as f32 && r3.x > buff.widht as f32 {
+            let p1 = traslacion.transform_point3(tri.p1);
+            let p2 = traslacion.transform_point3(tri.p2);
+            let p3 = traslacion.transform_point3(tri.p3);
+
+            let r1 = obtener_p_relativo(p1, context.cam);
+            let r2 = obtener_p_relativo(p2, context.cam);
+            let r3 = obtener_p_relativo(p3, context.cam);
+
+            if r1.z < context.z_near || r2.z < context.z_near || r3.z < context.z_near {
                 continue;
             }
 
-            if r1.x > buff.height as f32 && r2.y > buff.height as f32 && r3.y > buff.height as f32 {
-                continue;
-            }
-            */
-
-            if r1.z < z_near || r2.z < z_near || r3.z < z_near {
+            if r1.z > context.z_far && r2.z > context.z_far && r3.z > context.z_far {
                 continue;
             }
 
-            if r1.z > z_far && r2.z > z_far && r3.z > z_far {
-                continue;
-            }
-            //arreglar el z far y near con el p final de la camara
-            let char = ascii_luz(&r1, &r2, &r3, &luz_pos, ambiente);
+            //esto no es physics accuarate
 
-            //back face culling, cambiar con el modelo de camara movible,
-            // esto solo sera temporal
+            //let mut char = ' ';
+            //for light in &context.escene.lights {
 
-            let s1 = proyect_3d(&r1, cam);
-            let s2 = proyect_3d(&r2, cam);
-            let s3 = proyect_3d(&r3, cam);
-
-            //adaptar signeg area a la camara
-            if signed_area(s1, s2, s3) < 0.0 {
-                //draw_ascii_triangle(buff, s1, s2, s3, char, obj.color);
-
-                draw_full_triangle(buff, cam, r1, r2, r3, char, obj.color);
-                //draw_ascii_triangle(buff, s1, s2, s3, obj.letter, (0, 0, 0));
+            if es_cara_trasera_cw(&p1, &p2, &p3, &context.cam.pos) {
+                let cf = calculate_all_scene_lights(
+                    &context.escene.lights,
+                    obj.color,
+                    Triangle::new(p1, p2, p3),
+                    context.escene.ambient_light,
+                );
+                draw_full_triangle(cf, &mut context.frame_buffer, &mut context.cam, r1, r2, r3);
             }
         }
     }
 }
 
-fn obtener_p_relativo(v: Vec3, cam: &mut obj::CAM) -> Vec3 {
+fn obtener_p_relativo(v: Vec3, cam: cam::CAM) -> Vec3 {
     let camera_space = cam.rotation.transform_point3(v - cam.pos);
 
     camera_space
 }
 
 pub fn draw_full_triangle(
+    color: (u8, u8, u8),
     buff: &mut FrameBuffer,
-    cam: &mut obj::CAM,
+    cam: &mut cam::CAM,
     v1: Vec3,
     v2: Vec3,
     v3: Vec3,
-    letter: char,
-    color: (u8, u8, u8),
 ) {
     //let aspect_ratio = 0.5;
     let z1 = v1.z;
@@ -350,10 +328,9 @@ pub fn draw_full_triangle(
     let y_min = min(v1_s.y as i32, min(v2_s.y as i32, v3_s.y as i32)).max(0);
     let y_max = max(v1_s.y as i32, max(v2_s.y as i32, v3_s.y as i32)).min(buff.height as i32);
 
-    //asi se ajusta al len de la lista -1
     for y in y_min..y_max {
         for x in x_min..x_max {
-            let p = Vec2::new(x as f32 + 0.5, y as f32 + 0.5);
+            let p = Vec2::new(x as f32 + 1.0, y as f32 + 1.0);
 
             let e0 = signed_area(v1_s, v2_s, p);
             let e1 = signed_area(v2_s, v3_s, p);
@@ -377,7 +354,7 @@ pub fn draw_full_triangle(
                     write!(
                         buff.frame,
                         "\x1B[{};{}H\x1b[38;2;{};{};{}m{}",
-                        y, x, color.0, color.1, color.2, letter
+                        y, x, color.0, color.1, color.2, '█'
                     )
                     .unwrap();
 
@@ -389,21 +366,14 @@ pub fn draw_full_triangle(
     }
 }
 
-fn ascii_luz(v1: &Vec3, v2: &Vec3, v3: &Vec3, luz_pos: &Vec3, ambiente: &f32) -> char {
+fn es_cara_trasera_cw(v1: &Vec3, v2: &Vec3, v3: &Vec3, camera_pos: &Vec3) -> bool {
     let arista1 = v1 - v2;
     let arista2 = v2 - v3;
+    let normal = arista2.cross(arista1);
 
-    let ambiente = ambiente;
-    let normal = arista1.cross(arista2).normalize();
-    let intensidad = (normal.dot(*luz_pos).max(0.0) + ambiente).min(1.0);
+    // Vector del triángulo hacia la cámara
+    let hacia_camara = *camera_pos - *v1;
 
-    let luz = vec![
-        ' ', '.', '\'', '`', '^', '"', ',', ':', ';', 'I', 'l', '!', 'i', '>', '<', '~', '+', '_',
-        '-', '?', ']', '[', '}', '{', '1', ')', '(', '|', '\\', '/', 't', 'f', 'j', 'r', 'x', 'n',
-        'u', 'v', 'c', 'z', 'X', 'Y', 'U', 'J', 'C', 'L', 'Q', '0', 'O', 'Z', 'm', 'w', 'q', 'p',
-        'd', 'b', 'k', 'h', 'a', 'o', '*', '#', 'M', 'W', '&', '8', '%', 'B', '@', '$', '░', '▒',
-    ];
-
-    let indice = (intensidad * (luz.len() - 1) as f32) as usize;
-    luz[indice]
+    // Si la normal apunta AWAY de la cámara, es trasera
+    normal.dot(hacia_camara) > 0.0
 }
