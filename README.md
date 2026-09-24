@@ -43,7 +43,7 @@ DATO EXTRA:
   no es mi primer motor por cpu 3d hecho por terminal, pero entre todos esta es la considerada version final
 
 proposito del proyecto:
-  --en general me gusto mucho el aprendizaje que tube con el, me impresione en como en tan poco tiempo puede
+  en general me gusto mucho el aprendizaje que tube con el, me impresione en como en tan poco tiempo puede
     mejorar tanto
 
     El proposito era aprender, y buscar esa estetica. Realmente no se que se pueda hacer con esto.
