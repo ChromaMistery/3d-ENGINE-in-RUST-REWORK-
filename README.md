@@ -73,4 +73,7 @@ Requisitos para ejecutar el codigo:
 
 ![Captura del proyecto](captura.png)
 
-![Videito](un_gif.gif)
+
+
+demostracion simple:
+  https://youtu.be/8DmQFJlWEI0
