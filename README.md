@@ -1,11 +1,8 @@
 # 3d-ENGINE-in-RUST-REWORK-
-# 3d-ENGINE-in-RUST-REWORK-
-# 3d-ENGINE-in-RUST-REWORK-
-# 3d-ENGINE-in-RUST-REWORK-
-# 3d-ENGINE-in-RUST-REWORK-
 
 
--------------/!\ ADVERTENCIA/!\ ---------------
+
+#-------------/!\ ADVERTENCIA/!\ ---------------
             PRIMER PROYECTO SUBIDO A 
                    GITHUB
 
@@ -16,7 +13,7 @@ y mal estructurado escrito por un puberto,
 modificalo y leelo bajo tu propio riesgo.
 No es mi culpa si vomitas, ya te lo adverti.
 
--------------/!\ ADVERTENCIA/!\ ---------------
+#-------------/!\ ADVERTENCIA/!\ ---------------
 
 
 
