@@ -71,6 +71,6 @@ Requisitos para ejecutar el codigo:
 
   VIVA EL CODIGO LIBRE
 
-![Captura del proyecto](assets/captura.png)
+![Captura del proyecto](captura.png)
 
-![Videito](assets/un_gif.gif)
+![Videito](un_gif.gif)
