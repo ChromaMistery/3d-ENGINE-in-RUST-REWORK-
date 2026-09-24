@@ -21,7 +21,9 @@ No es mi culpa si vomitas, ya te lo adverti.
 
 
               
-
+La razon principal por el salto de historia con respecto a los commits es que en el transcurso del desarrollo incial y final tube un problema de almacenamiento con mi laptop principal, temporalmente estube usando una HP que arregle por mi cuenta. El problema era que la HP
+tenia problemas con respecto al chip de internet, lo que causaba que fuera muy inestable.
+Tambien esta la consideracion de que es el primer proyecto serio que tengo, para todo hay primera vez, y me alegro que la primera vez fuera tan magnifica.
 
 
 
