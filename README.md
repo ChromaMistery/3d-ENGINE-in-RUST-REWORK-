@@ -71,6 +71,6 @@ Requisitos para ejecutar el codigo:
 
   VIVA EL CODIGO LIBRE
 
-![Captura de pantalla del proyecto](assets/Captura desde 2026-09-24 12-27-06.png)
+![Captura de pantalla del proyecto](Captura desde 2026-09-24 12-27-06.png)
 
-![Videito](assets/Grabación de pantalla desde 2026-09-24 12-21-28.gif)
+![Videito](Grabación de pantalla desde 2026-09-24 12-21-28.gif)
