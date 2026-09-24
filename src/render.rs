@@ -233,7 +233,7 @@ pub fn proyect_3d(v: &Vec3, cam: &mut cam::CAM) -> Vec2 {
     //tengo que contar tambien la rotacion de la camara
 
     let real_d: f32;
-    let minimun_d = 0.1;
+    let minimun_d = 0.001;
 
     if minimun_d > cam.d_fov {
         real_d = minimun_d;

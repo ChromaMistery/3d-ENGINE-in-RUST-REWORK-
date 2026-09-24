@@ -29,12 +29,12 @@ fn main() -> std::io::Result<()> {
     EngineConf::start()?;
 
     let mut objeto1: obj::Obj3d = obj::Obj3d {
-        color: (255, 127, 80),
-        pos: Vec3::new(0.0, 0.0, 4.0),
-        scale: Vec3::new(0.0, 0.0, 0.0),
-        rotate: Vec3::new(0.0, 1.0, 0.0),
+        color: (255, 255, 255),
+        pos: Vec3::new(0.0, 0.0, 0.0),
+        scale: Vec3::new(20.0, 20.0, 20.0),
+        rotate: Vec3::new(0.0, 0.0, 0.0),
 
-        mesh: objloader::load_obj("3d_models/Charizard.obj"),
+        mesh: objloader::load_obj("3d_models/stanford-bunny.obj"),
     };
 
     //anadir caracteristica de angulo
@@ -48,6 +48,11 @@ fn main() -> std::io::Result<()> {
     // anadir optimizacion de centro y de triangulos
     // anadir rayon
     // agregar check entre fotogramas, si el objeto esta en la misma pos se salta todo
+    //agregar hjkl movimiento pitch y yaw para la camara
+    //funcion que aplique todas las transformaciones de un objeto en el loop
+    // si el objeto esta estatico no se aplica
+    //funcion para poner los triangulos al sentido del rasterizador
+    // remplazar el back face culling 3d por el signed area
 
     let mut prev = Instant::now();
     //instante inicial para el delta time
@@ -68,7 +73,7 @@ fn main() -> std::io::Result<()> {
     //anadir luz especular
     let l = Light::new_point_light(Vec3::new(20.0, 0.0, 0.0), (1, 255, 255), 25.0, 2.0);
 
-    let l2 = Light::new_point_light(Vec3::new(-20.0, 0.0, 0.0), (255, 1, 1), 25.0, 2.0);
+    let l2 = Light::new_point_light(Vec3::new(-20.0, 0.0, 0.0), (255, 127, 80), 25.0, 2.0);
 
     let frame_buff = render::FrameBuffer::new(cols as usize, rows as usize);
     let escene = Escene {
